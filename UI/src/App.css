@@ -53,3 +53,63 @@ input:checked + .slider:before {
 	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 	padding: 20px;
 }
+
+/* Common button styles */
+.button {
+	background-color: #6b46c1;
+	/* Same as bg-purple-600 */
+	color: #edf2f7;
+	/* Light text color */
+	border: none;
+	border-radius: 8px;
+	padding: 0.5rem 1rem;
+	cursor: pointer;
+	font-size: 1rem;
+	transition: background-color 0.3s ease;
+}
+
+.button:hover {
+	background-color: #805ad5;
+	/* Darker shade on hover */
+}
+
+/* Styling for dialog buttons */
+.dialog-button {
+	background-color: #6b46c1;
+	/* Match with Next and Previous */
+	color: #edf2f7;
+	/* Light text color */
+	border: none;
+	border-radius: 8px;
+	padding: 0.5rem 1rem;
+	cursor: pointer;
+	font-size: 1rem;
+	transition: background-color 0.3s ease;
+}
+
+.dialog-button:hover {
+	background-color: #805ad5;
+	/* Darker shade on hover */
+}
+
+/* Cancel button styling */
+.dialog-button.cancel {
+	background-color: #e53e3e;
+	/* Red color for cancel */
+}
+
+.dialog-button.cancel:hover {
+	background-color: #c53030;
+	/* Darker shade on hover */
+}
+
+/* Dialog styles */
+.dialog-panel {
+	background-color: #2d3748;
+	/* Dark background for the dialog */
+	color: #edf2f7;
+	/* Light text color */
+	border-radius: 12px; /* Rounded corners */
+	box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Shadow effect */
+	padding: 20px;
+}

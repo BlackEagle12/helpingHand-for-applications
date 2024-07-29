@@ -18,6 +18,7 @@ const App = () => {
 		isApplicationSubmitted: false,
 		isRefralMessageSent: false,
 		isIntrested: false,
+		companymembers: [], // Added companymembers to tempToggleValues
 	});
 
 	// Fetch job IDs on component mount
@@ -49,6 +50,10 @@ const App = () => {
 				isApplicationSubmitted: response.data.isApplicationSubmitted,
 				isRefralMessageSent: response.data.isRefralMessageSent,
 				isIntrested: response.data.isIntrested,
+				companymembers:
+					response.data.companymembers.map((member) => {
+						return { ...member };
+					}) || [],
 			});
 			// Fetch counts
 			const interestedCount = await axios.get(
@@ -100,11 +105,33 @@ const App = () => {
 
 	// Handle toggle switch changes
 	const handleToggleChange = (field) => {
-		setTempToggleValues((prevValues) => ({
-			...prevValues,
-			[field]: !prevValues[field],
-		}));
-		setIsDialogOpen(true);
+		// Extract index and property from field
+		const [baseField, index, property] = field
+			.split(/[\[\].]+/)
+			.filter(Boolean);
+
+		if (baseField === "companymembers" && index !== undefined && property) {
+			setTempToggleValues((prevValues) => {
+				// Deep clone jobDetail to avoid mutating the state directly
+
+				// Update the specific company member's property
+				prevValues.companymembers[index][property] =
+					!prevValues.companymembers[index][property];
+
+				return {
+					...prevValues,
+				};
+			});
+
+			// Open the dialog
+			setIsDialogOpen(true);
+		} else {
+			setTempToggleValues((prevValues) => ({
+				...prevValues,
+				[field]: !prevValues[field],
+			}));
+			setIsDialogOpen(true);
+		}
 	};
 
 	// Confirm toggle changes and save to the server
@@ -128,10 +155,19 @@ const App = () => {
 
 	// Handle filter change to show different job statuses
 	const handleFilterChange = async (event) => {
-		const filterValue = event.target.value;
+		const queryObject = JSON.parse(event.target.value);
+		console.log(queryObject);
+		let query = "";
+		if (queryObject.visited != null) {
+			query += `visited=${queryObject.visited}`;
+		}
+		if (queryObject.interested != null) {
+			query += `&interested=${queryObject.interested}`;
+		}
+
 		try {
 			const response = await axios.get(
-				`http://localhost:3000/jobDetails/ids?visited=${filterValue}`
+				`http://localhost:3000/jobDetails/ids?${query}`
 			);
 			setIds(response.data);
 			if (response.data.length > 0) {
@@ -153,9 +189,18 @@ const App = () => {
 					className="p-2 rounded bg-purple-600 text-white"
 					onChange={handleFilterChange}
 				>
-					<option value="">Show All</option>
-					<option value="true">Show Visited Only</option>
-					<option value="false">Show Not Visited Only</option>
+					<option value={JSON.stringify({ visited: null, interested: null })}>
+						Show All
+					</option>
+					<option value={JSON.stringify({ visited: true, interested: null })}>
+						Show Visited Only
+					</option>
+					<option value={JSON.stringify({ visited: false, interested: null })}>
+						Show Not Visited Only
+					</option>
+					<option value={JSON.stringify({ visited: true, interested: true })}>
+						Show interested Only
+					</option>
 				</select>
 			</div>
 
@@ -177,97 +222,177 @@ const App = () => {
 
 			{/* Job details card */}
 			{jobDetail ? (
-				<div className="card max-w-lg mx-auto p-10 rounded shadow-lg bg-opacity-20 bg-gray-800">
-					<div className="flex items-center mb-4">
-						<img
-							src={jobDetail.Company.CompanyLogoUrl}
-							alt="Company Logo"
-							className="h-24 w-24 rounded-full mr-4"
-						/>
-						<div>
-							<h3 className="text-2xl font-bold underline">
-								<a
-									href={jobDetail.Job.LinkedInPostUrl}
-									target="_blank"
-									rel="noopener noreferrer"
-								>
-									{jobDetail.Job.JobTitle}
-								</a>
-							</h3>
-							<h2 className="font-bold">{jobDetail.Company.CompanyName}</h2>
-							<p>{jobDetail.Job.Location}</p>
+				<div className="card w-[90%] mx-auto p-10 rounded shadow-lg bg-opacity-20 bg-gray-800">
+					<div className="flex w-full justify-between flex-wrap">
+						<div className="w-[40%]">
+							<div className="flex items-center mb-4">
+								<img
+									src={jobDetail.Company.CompanyLogoUrl}
+									alt="Company Logo"
+									className="h-24 w-24 rounded-full mr-4"
+								/>
+								<div>
+									<h3 className="text-2xl font-bold underline">
+										<a
+											href={jobDetail.Job.LinkedInPostUrl}
+											target="_blank"
+											rel="noopener noreferrer"
+										>
+											{jobDetail.Job.JobTitle}
+										</a>
+									</h3>
+									<h2 className="font-bold">{jobDetail.Company.CompanyName}</h2>
+									<p>{jobDetail.Job.Location}</p>
+								</div>
+							</div>
+
+							{/* Job details */}
+							<div className="my-4">
+								<p className="my-2">
+									<span className="font-bold">PostTime: </span>
+									{jobDetail.Job.PostTime}
+								</p>
+								<p className="my-2">
+									<span className="font-bold">TotalApplicant: </span>
+									{jobDetail.Job.TotalApplicant}
+								</p>
+								<p className="my-2">
+									<span className="font-bold">JobRemotType: </span>
+									{jobDetail.Job.JobRemotType}
+								</p>
+								<p className="my-2">
+									<span className="font-bold">JobType: </span>
+									{jobDetail.Job.JobType}
+								</p>
+							</div>
+
+							{/* Toggle switches */}
+							<div className="mb-4 flex flex-col">
+								{[
+									{
+										label: "Application Submitted",
+										field: "isApplicationSubmitted",
+									},
+									{
+										label: "Referral Message Sent",
+										field: "isRefralMessageSent",
+									},
+									{ label: "Interested", field: "isIntrested" },
+									{ label: "Visited", field: "isVisited", readOnly: true },
+								].map(({ label, field, readOnly }, index) => (
+									<label key={index} className="flex items-center my-2">
+										<span className="mr-2">{label}</span>
+										<label className="switch">
+											<input
+												type="checkbox"
+												checked={jobDetail[field]}
+												onChange={() => handleToggleChange(field)}
+												disabled={readOnly}
+											/>
+											<span className="slider"></span>
+										</label>
+									</label>
+								))}
+							</div>
+						</div>
+
+						<div className="w-[60%]">
+							{/* Company members */}
+							<h3 className="text-lg font-bold mb-2">Company Members</h3>
+							{jobDetail.companymembers && (
+								<div className="flex gap-10 flex-wrap justify-between ">
+									{jobDetail.companymembers.map((member, index) => (
+										<div
+											key={member._id}
+											className="p-3 border rounded min-w-[250px]"
+										>
+											<div className="flex items-center my-1 gap-2">
+												<svg
+													class="h-8 w-8 text-violet-700"
+													fill="none"
+													viewBox="0 0 24 24"
+													stroke="currentColor"
+												>
+													<path
+														stroke-linecap="round"
+														stroke-linejoin="round"
+														stroke-width="2"
+														d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+													/>
+												</svg>
+
+												<span className="mr-2">
+													<a
+														href={member.memberProfileUrl}
+														target="_blank"
+														rel="noopener noreferrer"
+														className="underline"
+													>
+														{member.memberName}
+													</a>
+												</span>
+											</div>
+											<div className="flex items-center my-1 gap-2 justify-between">
+												copy messgae
+												<svg
+													class="h-6 w-6 text-violet-700 cursor-pointer mx-3 hover"
+													width="24"
+													height="24"
+													viewBox="0 0 24 24"
+													stroke-width="2"
+													stroke="currentColor"
+													fill="none"
+													stroke-linecap="round"
+													stroke-linejoin="round"
+													onClick={() => {
+														navigator.clipboard.writeText(
+															`Hi ${member.memberName},\nI hope you're well. Noticed we work in the same industry and would love to connect. I found an exciting opening for ${jobDetail.Job.JobTitle} at ${jobDetail.Company.CompanyName}. I believe I'd be a great fit. Could you refer me for the same?`
+														);
+														toast.success("Message copied to clipboard!", {
+															position: "bottom-right",
+														});
+													}}
+												>
+													{" "}
+													<path stroke="none" d="M0 0h24v24H0z" />{" "}
+													<rect x="8" y="8" width="12" height="12" rx="2" />{" "}
+													<path d="M16 8v-2a2 2 0 0 0 -2 -2h-8a2 2 0 0 0 -2 2v8a2 2 0 0 0 2 2h2" />
+												</svg>
+											</div>
+											<label className="flex items-center my-1 justify-between">
+												Is used for refral
+												<label className="switch">
+													<input
+														type="checkbox"
+														checked={member.IsInvitationSent}
+														onChange={() =>
+															handleToggleChange(
+																`companymembers[${index}].IsInvitationSent`
+															)
+														}
+													/>
+													<span className="slider"></span>
+												</label>
+											</label>
+										</div>
+									))}
+								</div>
+							)}
 						</div>
 					</div>
 
-					{/* Job details */}
-					<div className="my-4">
-						<p className="my-2">
-							<span className="font-bold">PostTime: </span>
-							{jobDetail.Job.PostTime}
-						</p>
-						<p className="my-2">
-							<span className="font-bold">TotalApplicant: </span>
-							{jobDetail.Job.TotalApplicant}
-						</p>
-						<p className="my-2">
-							<span className="font-bold">JobRemotType: </span>
-							{jobDetail.Job.JobRemotType}
-						</p>
-						<p className="my-2">
-							<span className="font-bold">JobType: </span>
-							{jobDetail.Job.JobType}
-						</p>
-					</div>
-
-					{/* Toggle switches */}
-					<div className="mb-4 flex flex-col">
-						{[
-							{ label: "Easy Apply", field: "Job.IsEasyApply", readOnly: true },
-							{
-								label: "Application Submitted",
-								field: "isApplicationSubmitted",
-							},
-							{ label: "Referral Message Sent", field: "isRefralMessageSent" },
-							{ label: "Interested", field: "isIntrested" },
-							{
-								label: "Member Fetched",
-								field: "isMenberFerched",
-								readOnly: true,
-							},
-							{ label: "Visited", field: "isVisited", readOnly: true },
-						].map((toggle) => (
-							<label key={toggle.field}>
-								{toggle.label}
-								<label className="switch">
-									<input
-										className="my-2"
-										type="checkbox"
-										checked={jobDetail[toggle.field]}
-										onChange={
-											!toggle.readOnly
-												? () => handleToggleChange(toggle.field)
-												: undefined
-										}
-										readOnly={toggle.readOnly}
-									/>
-									<span className="slider"></span>
-								</label>
-							</label>
-						))}
-					</div>
-
 					{/* Navigation buttons */}
-					<div className="flex justify-between mt-4">
+					<div className="flex justify-between my-4">
 						<button
-							className="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded"
 							onClick={handlePrevious}
+							className="px-4 py-2 bg-purple-600 rounded"
 							disabled={currentIndex === 0}
 						>
 							Previous
 						</button>
 						<button
-							className="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded"
 							onClick={handleNext}
+							className="px-4 py-2 bg-purple-600 rounded"
 							disabled={currentIndex === ids.length - 1}
 						>
 							Next
@@ -278,10 +403,7 @@ const App = () => {
 				<p className="text-center">No job details available.</p>
 			)}
 
-			{/* Toast notifications */}
-			<ToastContainer />
-
-			{/* Confirmation dialog */}
+			{/* Dialog for confirmation */}
 			<Transition appear show={isDialogOpen} as={Fragment}>
 				<Dialog
 					as="div"
@@ -290,60 +412,55 @@ const App = () => {
 				>
 					<Transition.Child
 						as={Fragment}
-						enter="ease-out duration-300"
+						enter="transition-opacity ease-linear duration-300"
 						enterFrom="opacity-0"
 						enterTo="opacity-100"
-						leave="ease-in duration-200"
+						leave="transition-opacity ease-linear duration-300"
 						leaveFrom="opacity-100"
 						leaveTo="opacity-0"
 					>
-						<div className="fixed inset-0 bg-black bg-opacity-25" />
+						<div className="fixed inset-0 bg-black/30" aria-hidden="true" />
 					</Transition.Child>
-					<div className="fixed inset-0 overflow-y-auto">
-						<div className="flex min-h-full items-center justify-center p-4 text-center">
-							<Transition.Child
-								as={Fragment}
-								enter="ease-out duration-300"
-								enterFrom="opacity-0 scale-95"
-								enterTo="opacity-100 scale-100"
-								leave="ease-in duration-200"
-								leaveFrom="opacity-100 scale-100"
-								leaveTo="opacity-0 scale-95"
-							>
-								<Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
-									<Dialog.Title
-										as="h3"
-										className="text-lg font-medium leading-6 text-gray-900"
+					<div className="fixed inset-0 flex items-center justify-center p-4">
+						<Transition.Child
+							as={Fragment}
+							enter="transition-transform ease-out duration-300"
+							enterFrom="translate-y-4 opacity-0"
+							enterTo="translate-y-0 opacity-100"
+							leave="transition-transform ease-in duration-200"
+							leaveFrom="translate-y-0 opacity-100"
+							leaveTo="translate-y-4 opacity-0"
+						>
+							<Dialog.Panel className="max-w-sm dialog-panel">
+								<Dialog.Title as="h3" className="text-lg font-bold mb-4">
+									Confirm Changes
+								</Dialog.Title>
+								<p className="mb-4">
+									Are you sure you want to apply these changes?
+								</p>
+								<div className="flex justify-end space-x-4">
+									<button
+										type="button"
+										className="dialog-button cancel"
+										onClick={() => setIsDialogOpen(false)}
 									>
-										Confirm Change
-									</Dialog.Title>
-									<div className="mt-2">
-										<p className="text-sm text-gray-500">
-											Are you sure you want to save this change?
-										</p>
-									</div>
-									<div className="mt-4 flex justify-end space-x-4">
-										<button
-											type="button"
-											className="inline-flex justify-center rounded-md border border-transparent bg-purple-500 px-4 py-2 text-sm font-medium text-white hover:bg-purple-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-purple-500"
-											onClick={confirmToggleChange}
-										>
-											Yes
-										</button>
-										<button
-											type="button"
-											className="inline-flex justify-center rounded-md border border-transparent bg-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-gray-500"
-											onClick={() => setIsDialogOpen(false)}
-										>
-											No
-										</button>
-									</div>
-								</Dialog.Panel>
-							</Transition.Child>
-						</div>
+										Cancel
+									</button>
+									<button
+										type="button"
+										className="dialog-button"
+										onClick={confirmToggleChange}
+									>
+										Confirm
+									</button>
+								</div>
+							</Dialog.Panel>
+						</Transition.Child>
 					</div>
 				</Dialog>
 			</Transition>
+
+			<ToastContainer />
 		</div>
 	);
 };

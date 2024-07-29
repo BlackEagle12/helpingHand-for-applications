@@ -59,9 +59,21 @@ router.get("/ids", async (req, res) => {
 				: req.query.visited === "false"
 				? false
 				: null;
+		const interested =
+			req.query.interested === "true"
+				? true
+				: req.query.interested === "false"
+				? false
+				: null;
+
 		let query = {};
+
 		if (visited !== null) {
 			query.isVisited = visited;
+		}
+
+		if (interested !== null) {
+			query.isIntrested = interested;
 		}
 		const ids = await JobDetail.find(query).select("_id");
 		res.json(ids);
