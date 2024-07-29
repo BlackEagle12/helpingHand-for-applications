@@ -70,6 +70,43 @@ router.get("/ids", async (req, res) => {
 	}
 });
 
+router.get("/interested", async (req, res) => {
+	try {
+		let query = {};
+		query.isIntrested = true;
+
+		const count = await JobDetail.countDocuments(query);
+		res.json(count);
+	} catch (error) {
+		res.status(500).json({ message: error.message });
+	}
+});
+
+router.get("/notinterested", async (req, res) => {
+	try {
+		let query = {};
+		query.isIntrested = false;
+		query.isVisited = true;
+
+		const count = await JobDetail.countDocuments(query);
+		res.json(count);
+	} catch (error) {
+		res.status(500).json({ message: error.message });
+	}
+});
+
+router.get("/notvisited", async (req, res) => {
+	try {
+		let query = {};
+		query.isVisited = false;
+
+		const count = await JobDetail.countDocuments(query);
+		res.json(count);
+	} catch (error) {
+		res.status(500).json({ message: error.message });
+	}
+});
+
 // Read a single item by ID
 router.get("/:id", async (req, res) => {
 	try {
@@ -114,9 +151,7 @@ router.put("/:id", async (req, res) => {
 // Delete data
 router.delete("/:id", async (req, res) => {
 	try {
-		const deletedJobDetail = await JobDetail.findByIdAndDelete(
-			req.params.id
-		);
+		const deletedJobDetail = await JobDetail.findByIdAndDelete(req.params.id);
 		if (!deletedJobDetail) {
 			return res.status(404).json({ message: "Company data not found" });
 		}
