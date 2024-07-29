@@ -1,12 +1,15 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Fragment } from "react";
 import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { Dialog, Transition } from "@headlessui/react";
-import { Fragment } from "react";
 import "./App.css";
 
 const App = () => {
+	// State variables for counts and job details
+	const [interestedCount, setInterestedCount] = useState(0);
+	const [notInterestedCount, setNotInterestedCount] = useState(0);
+	const [notVisitedCount, setNotVisitedCount] = useState(0);
 	const [ids, setIds] = useState([]);
 	const [currentIndex, setCurrentIndex] = useState(0);
 	const [jobDetail, setJobDetail] = useState(null);
@@ -17,15 +20,15 @@ const App = () => {
 		isIntrested: false,
 	});
 
+	// Fetch job IDs on component mount
 	useEffect(() => {
 		fetchIds();
 	}, []);
 
+	// Fetch all job IDs from the server
 	const fetchIds = async () => {
 		try {
-			const response = await axios.get(
-				"http://localhost:3000/jobDetails/ids"
-			);
+			const response = await axios.get("http://localhost:3000/jobDetails/ids");
 			setIds(response.data);
 			if (response.data.length > 0) {
 				fetchJobDetail(response.data[0]._id);
@@ -35,26 +38,46 @@ const App = () => {
 		}
 	};
 
+	// Fetch job details for a specific job ID
 	const fetchJobDetail = async (id) => {
 		try {
 			const response = await axios.get(
 				`http://localhost:3000/jobDetails/${id}`
 			);
 			setJobDetail(response.data);
+			setTempToggleValues({
+				isApplicationSubmitted: response.data.isApplicationSubmitted,
+				isRefralMessageSent: response.data.isRefralMessageSent,
+				isIntrested: response.data.isIntrested,
+			});
+			// Fetch counts
+			const interestedCount = await axios.get(
+				`http://localhost:3000/jobDetails/interested`
+			);
+			setInterestedCount(interestedCount.data);
+			const notInterestedCount = await axios.get(
+				`http://localhost:3000/jobDetails/notinterested`
+			);
+			setNotInterestedCount(notInterestedCount.data);
+			const notVisitedCount = await axios.get(
+				`http://localhost:3000/jobDetails/notvisited`
+			);
+			setNotVisitedCount(notVisitedCount.data);
 		} catch (error) {
 			console.error("Error fetching job detail:", error);
 		}
 	};
 
+	// Handle navigation to the next job detail
 	const handleNext = async () => {
 		const nextIndex = currentIndex + 1;
 		if (nextIndex < ids.length) {
 			const nextId = ids[nextIndex]._id;
 			try {
-				await axios.put(
-					`http://localhost:3000/jobDetails/${jobDetail._id}`,
-					{ ...jobDetail, isVisited: true }
-				);
+				await axios.put(`http://localhost:3000/jobDetails/${jobDetail._id}`, {
+					...jobDetail,
+					isVisited: true,
+				});
 				setCurrentIndex(nextIndex);
 				fetchJobDetail(nextId);
 			} catch (error) {
@@ -66,6 +89,7 @@ const App = () => {
 		}
 	};
 
+	// Handle navigation to the previous job detail
 	const handlePrevious = () => {
 		const prevIndex = currentIndex - 1;
 		if (prevIndex >= 0) {
@@ -74,6 +98,7 @@ const App = () => {
 		}
 	};
 
+	// Handle toggle switch changes
 	const handleToggleChange = (field) => {
 		setTempToggleValues((prevValues) => ({
 			...prevValues,
@@ -82,6 +107,7 @@ const App = () => {
 		setIsDialogOpen(true);
 	};
 
+	// Confirm toggle changes and save to the server
 	const confirmToggleChange = async () => {
 		try {
 			const updatedDetail = { ...jobDetail, ...tempToggleValues };
@@ -95,13 +121,12 @@ const App = () => {
 			});
 		} catch (error) {
 			console.error("Error saving changes:", error);
-			toast.error("Failed to save changes.", {
-				position: "bottom-right",
-			});
+			toast.error("Failed to save changes.", { position: "bottom-right" });
 		}
 		setIsDialogOpen(false);
 	};
 
+	// Handle filter change to show different job statuses
 	const handleFilterChange = async (event) => {
 		const filterValue = event.target.value;
 		try {
@@ -122,6 +147,7 @@ const App = () => {
 
 	return (
 		<div className="min-h-screen bg-purple-900 bg-gradient-to-b from-gray-900 via-gray-900 to-purple-800 p-4 text-white">
+			{/* Filter dropdown */}
 			<div className="flex justify-center mb-4">
 				<select
 					className="p-2 rounded bg-purple-600 text-white"
@@ -132,6 +158,24 @@ const App = () => {
 					<option value="false">Show Not Visited Only</option>
 				</select>
 			</div>
+
+			{/* Job counts */}
+			<div className="flex justify-around mb-4">
+				<p className="my-2">
+					<span className="font-bold">Interested: </span>
+					{interestedCount}
+				</p>
+				<p className="my-2">
+					<span className="font-bold">Not Interested: </span>
+					{notInterestedCount}
+				</p>
+				<p className="my-2">
+					<span className="font-bold">Not Visited: </span>
+					{notVisitedCount}
+				</p>
+			</div>
+
+			{/* Job details card */}
 			{jobDetail ? (
 				<div className="card max-w-lg mx-auto p-10 rounded shadow-lg bg-opacity-20 bg-gray-800">
 					<div className="flex items-center mb-4">
@@ -150,12 +194,12 @@ const App = () => {
 									{jobDetail.Job.JobTitle}
 								</a>
 							</h3>
-							<h2 className="font-bold">
-								{jobDetail.Company.CompanyName}
-							</h2>
+							<h2 className="font-bold">{jobDetail.Company.CompanyName}</h2>
 							<p>{jobDetail.Job.Location}</p>
 						</div>
 					</div>
+
+					{/* Job details */}
 					<div className="my-4">
 						<p className="my-2">
 							<span className="font-bold">PostTime: </span>
@@ -174,90 +218,45 @@ const App = () => {
 							{jobDetail.Job.JobType}
 						</p>
 					</div>
+
+					{/* Toggle switches */}
 					<div className="mb-4 flex flex-col">
-						<label>
-							Easy Apply
-							<label className="switch">
-								<input
-									className="my-2"
-									type="checkbox"
-									checked={jobDetail.Job.IsEasyApply}
-									readOnly
-								/>
-								<span className="slider"></span>
+						{[
+							{ label: "Easy Apply", field: "Job.IsEasyApply", readOnly: true },
+							{
+								label: "Application Submitted",
+								field: "isApplicationSubmitted",
+							},
+							{ label: "Referral Message Sent", field: "isRefralMessageSent" },
+							{ label: "Interested", field: "isIntrested" },
+							{
+								label: "Member Fetched",
+								field: "isMenberFerched",
+								readOnly: true,
+							},
+							{ label: "Visited", field: "isVisited", readOnly: true },
+						].map((toggle) => (
+							<label key={toggle.field}>
+								{toggle.label}
+								<label className="switch">
+									<input
+										className="my-2"
+										type="checkbox"
+										checked={jobDetail[toggle.field]}
+										onChange={
+											!toggle.readOnly
+												? () => handleToggleChange(toggle.field)
+												: undefined
+										}
+										readOnly={toggle.readOnly}
+									/>
+									<span className="slider"></span>
+								</label>
 							</label>
-						</label>
-						<label>
-							Application Submitted
-							<label className="switch">
-								<input
-									className="my-2"
-									type="checkbox"
-									checked={jobDetail.isApplicationSubmitted}
-									onChange={() =>
-										handleToggleChange(
-											"isApplicationSubmitted"
-										)
-									}
-								/>
-								<span className="slider"></span>
-							</label>
-						</label>
-						<label>
-							Referral Message Sent
-							<label className="switch">
-								<input
-									className="my-2"
-									type="checkbox"
-									checked={jobDetail.isRefralMessageSent}
-									onChange={() =>
-										handleToggleChange(
-											"isRefralMessageSent"
-										)
-									}
-								/>
-								<span className="slider"></span>
-							</label>
-						</label>
-						<label>
-							Interested
-							<label className="switch">
-								<input
-									className="my-2"
-									type="checkbox"
-									checked={jobDetail.isIntrested}
-									onChange={() =>
-										handleToggleChange("isIntrested")
-									}
-								/>
-								<span className="slider"></span>
-							</label>
-						</label>
-						<label>
-							Member Fetched
-							<label className="switch">
-								<input
-									className="my-2"
-									type="checkbox"
-									checked={jobDetail.isMenberFerched}
-									readOnly
-								/>
-								<span className="slider"></span>
-							</label>
-						</label>
-						<label>
-							Visited
-							<label className="switch">
-								<input
-									className="my-2"
-									type="checkbox"
-									checked={jobDetail.isVisited}
-									readOnly
-								/>
-								<span className="slider"></span>
-							</label>
-						</label>
+						))}
 					</div>
+
+					{/* Navigation buttons */}
 					<div className="flex justify-between mt-4">
 						<button
 							className="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded"
@@ -278,7 +277,11 @@ const App = () => {
 			) : (
 				<p className="text-center">No job details available.</p>
 			)}
+
+			{/* Toast notifications */}
 			<ToastContainer />
+
+			{/* Confirmation dialog */}
 			<Transition appear show={isDialogOpen} as={Fragment}>
 				<Dialog
 					as="div"
@@ -316,8 +319,7 @@ const App = () => {
 									</Dialog.Title>
 									<div className="mt-2">
 										<p className="text-sm text-gray-500">
-											Are you sure you want to save this
-											change?
+											Are you sure you want to save this change?
 										</p>
 									</div>
 									<div className="mt-4 flex justify-end space-x-4">
@@ -331,9 +333,7 @@ const App = () => {
 										<button
 											type="button"
 											className="inline-flex justify-center rounded-md border border-transparent bg-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-gray-500"
-											onClick={() =>
-												setIsDialogOpen(false)
-											}
+											onClick={() => setIsDialogOpen(false)}
 										>
 											No
 										</button>
