@@ -8,7 +8,7 @@ const jobDetailchema = new mongoose.Schema({
 	Job: { type: Job.schema, required: true },
 	isMenberFerched: { type: Boolean, default: false },
 	isRefralMessageSent: { type: Boolean, default: false },
-	isRefralMessageSent: { type: Boolean, default: false },
+	isManualRefralMessageSent: { type: Boolean, default: false },
 	isApplicationSubmitted: { type: Boolean, default: false },
 	isIntrested: { type: Boolean, default: false },
 	isVisited: { type: Boolean, default: false },

@@ -1,7 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const JobDetail = require("../Models/jobDetail/JobDetail.Model");
-//add initial Data
+
+// //add initial Data
 // router.post("/all", async (req, res) => {
 // 	let successCount = 0;
 // 	let errorCount = 0;
@@ -43,7 +44,29 @@ const JobDetail = require("../Models/jobDetail/JobDetail.Model");
 // Read all data
 router.get("/", async (req, res) => {
 	try {
-		const jobDetail = await JobDetail.find();
+		const visited =
+			req.query.visited === "true"
+				? true
+				: req.query.visited === "false"
+				? false
+				: null;
+		const interested =
+			req.query.interested === "true"
+				? true
+				: req.query.interested === "false"
+				? false
+				: null;
+
+		let query = {};
+
+		if (visited !== null) {
+			query.isVisited = visited;
+		}
+
+		if (interested !== null) {
+			query.isIntrested = interested;
+		}
+		const jobDetail = await JobDetail.find(query);
 		res.json(jobDetail);
 	} catch (error) {
 		res.status(500).json({ error: error.message });
@@ -163,7 +186,9 @@ router.put("/:id", async (req, res) => {
 // Delete data
 router.delete("/:id", async (req, res) => {
 	try {
-		const deletedJobDetail = await JobDetail.findByIdAndDelete(req.params.id);
+		const deletedJobDetail = await JobDetail.findByIdAndDelete(
+			req.params.id
+		);
 		if (!deletedJobDetail) {
 			return res.status(404).json({ message: "Company data not found" });
 		}

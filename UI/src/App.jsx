@@ -29,7 +29,9 @@ const App = () => {
 	// Fetch all job IDs from the server
 	const fetchIds = async () => {
 		try {
-			const response = await axios.get("http://localhost:3000/jobDetails/ids");
+			const response = await axios.get(
+				"http://localhost:3000/jobDetails/ids"
+			);
 			setIds(response.data);
 			if (response.data.length > 0) {
 				fetchJobDetail(response.data[0]._id);
@@ -79,10 +81,13 @@ const App = () => {
 		if (nextIndex < ids.length) {
 			const nextId = ids[nextIndex]._id;
 			try {
-				await axios.put(`http://localhost:3000/jobDetails/${jobDetail._id}`, {
-					...jobDetail,
-					isVisited: true,
-				});
+				await axios.put(
+					`http://localhost:3000/jobDetails/${jobDetail._id}`,
+					{
+						...jobDetail,
+						isVisited: true,
+					}
+				);
 				setCurrentIndex(nextIndex);
 				fetchJobDetail(nextId);
 			} catch (error) {
@@ -148,7 +153,9 @@ const App = () => {
 			});
 		} catch (error) {
 			console.error("Error saving changes:", error);
-			toast.error("Failed to save changes.", { position: "bottom-right" });
+			toast.error("Failed to save changes.", {
+				position: "bottom-right",
+			});
 		}
 		setIsDialogOpen(false);
 	};
@@ -189,16 +196,36 @@ const App = () => {
 					className="p-2 rounded bg-purple-600 text-white"
 					onChange={handleFilterChange}
 				>
-					<option value={JSON.stringify({ visited: null, interested: null })}>
+					<option
+						value={JSON.stringify({
+							visited: null,
+							interested: null,
+						})}
+					>
 						Show All
 					</option>
-					<option value={JSON.stringify({ visited: true, interested: null })}>
+					<option
+						value={JSON.stringify({
+							visited: true,
+							interested: null,
+						})}
+					>
 						Show Visited Only
 					</option>
-					<option value={JSON.stringify({ visited: false, interested: null })}>
+					<option
+						value={JSON.stringify({
+							visited: false,
+							interested: null,
+						})}
+					>
 						Show Not Visited Only
 					</option>
-					<option value={JSON.stringify({ visited: true, interested: true })}>
+					<option
+						value={JSON.stringify({
+							visited: true,
+							interested: true,
+						})}
+					>
 						Show interested Only
 					</option>
 				</select>
@@ -241,7 +268,9 @@ const App = () => {
 											{jobDetail.Job.JobTitle}
 										</a>
 									</h3>
-									<h2 className="font-bold">{jobDetail.Company.CompanyName}</h2>
+									<h2 className="font-bold">
+										{jobDetail.Company.CompanyName}
+									</h2>
 									<p>{jobDetail.Job.Location}</p>
 								</div>
 							</div>
@@ -249,15 +278,21 @@ const App = () => {
 							{/* Job details */}
 							<div className="my-4">
 								<p className="my-2">
-									<span className="font-bold">PostTime: </span>
+									<span className="font-bold">
+										PostTime:{" "}
+									</span>
 									{jobDetail.Job.PostTime}
 								</p>
 								<p className="my-2">
-									<span className="font-bold">TotalApplicant: </span>
+									<span className="font-bold">
+										TotalApplicant:{" "}
+									</span>
 									{jobDetail.Job.TotalApplicant}
 								</p>
 								<p className="my-2">
-									<span className="font-bold">JobRemotType: </span>
+									<span className="font-bold">
+										JobRemotType:{" "}
+									</span>
 									{jobDetail.Job.JobRemotType}
 								</p>
 								<p className="my-2">
@@ -277,16 +312,28 @@ const App = () => {
 										label: "Referral Message Sent",
 										field: "isRefralMessageSent",
 									},
-									{ label: "Interested", field: "isIntrested" },
-									{ label: "Visited", field: "isVisited", readOnly: true },
+									{
+										label: "Interested",
+										field: "isIntrested",
+									},
+									{
+										label: "Visited",
+										field: "isVisited",
+										readOnly: true,
+									},
 								].map(({ label, field, readOnly }, index) => (
-									<label key={index} className="flex items-center my-2">
+									<label
+										key={index}
+										className="flex items-center my-2"
+									>
 										<span className="mr-2">{label}</span>
 										<label className="switch">
 											<input
 												type="checkbox"
 												checked={jobDetail[field]}
-												onChange={() => handleToggleChange(field)}
+												onChange={() =>
+													handleToggleChange(field)
+												}
 												disabled={readOnly}
 											/>
 											<span className="slider"></span>
@@ -294,88 +341,145 @@ const App = () => {
 									</label>
 								))}
 							</div>
+							<div className="w-full ml-24">
+								<a
+									href={jobDetail.Job.LinkedInPostUrl}
+									target="_blank"
+									rel="noopener noreferrer"
+								>
+									<button className="flex items-center gap-1 px-4 py-2 bg-red-500 disabled:bg-gray-400 rounded-full">
+										Apply
+										<svg
+											class="h-4 w-4 text-gray-300"
+											width="24"
+											height="24"
+											viewBox="0 0 24 24"
+											stroke-width="2"
+											stroke="currentColor"
+											fill="none"
+											stroke-linecap="round"
+											stroke-linejoin="round"
+										>
+											{" "}
+											<path
+												stroke="none"
+												d="M0 0h24v24H0z"
+											/>{" "}
+											<circle cx="12" cy="12" r="9" />{" "}
+											<line
+												x1="15"
+												y1="9"
+												x2="9"
+												y2="15"
+											/>{" "}
+											<polyline points="15 15 15 9 9 9" />
+										</svg>
+									</button>
+								</a>
+							</div>
 						</div>
 
 						<div className="w-[60%]">
 							{/* Company members */}
-							<h3 className="text-lg font-bold mb-2">Company Members</h3>
+							<h3 className="text-lg font-bold mb-2">
+								Company Members
+							</h3>
 							{jobDetail.companymembers && (
 								<div className="flex gap-10 flex-wrap justify-between ">
-									{jobDetail.companymembers.map((member, index) => (
-										<div
-											key={member._id}
-											className="p-3 border rounded min-w-[250px]"
-										>
-											<div className="flex items-center my-1 gap-2">
-												<svg
-													class="h-8 w-8 text-violet-700"
-													fill="none"
-													viewBox="0 0 24 24"
-													stroke="currentColor"
-												>
-													<path
+									{jobDetail.companymembers.map(
+										(member, index) => (
+											<div
+												key={member._id}
+												className="p-3 border rounded min-w-[250px]"
+											>
+												<div className="flex items-center my-1 gap-2">
+													<svg
+														class="h-8 w-8 text-violet-700"
+														fill="none"
+														viewBox="0 0 24 24"
+														stroke="currentColor"
+													>
+														<path
+															stroke-linecap="round"
+															stroke-linejoin="round"
+															stroke-width="2"
+															d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+														/>
+													</svg>
+
+													<span className="mr-2">
+														<a
+															href={
+																member.memberProfileUrl
+															}
+															target="_blank"
+															rel="noopener noreferrer"
+															className="underline"
+														>
+															{member.memberName}
+														</a>
+													</span>
+												</div>
+												<div className="flex items-center my-1 gap-2 justify-between">
+													copy messgae
+													<svg
+														class="h-6 w-6 text-violet-700 cursor-pointer mx-3 hover"
+														width="24"
+														height="24"
+														viewBox="0 0 24 24"
+														stroke-width="2"
+														stroke="currentColor"
+														fill="none"
 														stroke-linecap="round"
 														stroke-linejoin="round"
-														stroke-width="2"
-														d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-													/>
-												</svg>
-
-												<span className="mr-2">
-													<a
-														href={member.memberProfileUrl}
-														target="_blank"
-														rel="noopener noreferrer"
-														className="underline"
+														onClick={() => {
+															navigator.clipboard.writeText(
+																`Hi ${member.memberName},\nI hope you're well. Noticed we work in the same industry and would love to connect. I found an exciting opening for ${jobDetail.Job.JobTitle} at ${jobDetail.Company.CompanyName}. I believe I'd be a great fit. Could you refer me for the same?`
+															);
+															toast.success(
+																"Message copied to clipboard!",
+																{
+																	position:
+																		"bottom-right",
+																}
+															);
+														}}
 													>
-														{member.memberName}
-													</a>
-												</span>
-											</div>
-											<div className="flex items-center my-1 gap-2 justify-between">
-												copy messgae
-												<svg
-													class="h-6 w-6 text-violet-700 cursor-pointer mx-3 hover"
-													width="24"
-													height="24"
-													viewBox="0 0 24 24"
-													stroke-width="2"
-													stroke="currentColor"
-													fill="none"
-													stroke-linecap="round"
-													stroke-linejoin="round"
-													onClick={() => {
-														navigator.clipboard.writeText(
-															`Hi ${member.memberName},\nI hope you're well. Noticed we work in the same industry and would love to connect. I found an exciting opening for ${jobDetail.Job.JobTitle} at ${jobDetail.Company.CompanyName}. I believe I'd be a great fit. Could you refer me for the same?`
-														);
-														toast.success("Message copied to clipboard!", {
-															position: "bottom-right",
-														});
-													}}
-												>
-													{" "}
-													<path stroke="none" d="M0 0h24v24H0z" />{" "}
-													<rect x="8" y="8" width="12" height="12" rx="2" />{" "}
-													<path d="M16 8v-2a2 2 0 0 0 -2 -2h-8a2 2 0 0 0 -2 2v8a2 2 0 0 0 2 2h2" />
-												</svg>
-											</div>
-											<label className="flex items-center my-1 justify-between">
-												Is used for refral
-												<label className="switch">
-													<input
-														type="checkbox"
-														checked={member.IsInvitationSent}
-														onChange={() =>
-															handleToggleChange(
-																`companymembers[${index}].IsInvitationSent`
-															)
-														}
-													/>
-													<span className="slider"></span>
+														{" "}
+														<path
+															stroke="none"
+															d="M0 0h24v24H0z"
+														/>{" "}
+														<rect
+															x="8"
+															y="8"
+															width="12"
+															height="12"
+															rx="2"
+														/>{" "}
+														<path d="M16 8v-2a2 2 0 0 0 -2 -2h-8a2 2 0 0 0 -2 2v8a2 2 0 0 0 2 2h2" />
+													</svg>
+												</div>
+												<label className="flex items-center my-1 justify-between">
+													Is used for refral
+													<label className="switch">
+														<input
+															type="checkbox"
+															checked={
+																member.IsInvitationSent
+															}
+															onChange={() =>
+																handleToggleChange(
+																	`companymembers[${index}].IsInvitationSent`
+																)
+															}
+														/>
+														<span className="slider"></span>
+													</label>
 												</label>
-											</label>
-										</div>
-									))}
+											</div>
+										)
+									)}
 								</div>
 							)}
 						</div>
@@ -385,14 +489,14 @@ const App = () => {
 					<div className="flex justify-between my-4">
 						<button
 							onClick={handlePrevious}
-							className="px-4 py-2 bg-purple-600 rounded"
+							className="px-4 py-2 bg-purple-600 rounded disabled:bg-gray-400"
 							disabled={currentIndex === 0}
 						>
 							Previous
 						</button>
 						<button
 							onClick={handleNext}
-							className="px-4 py-2 bg-purple-600 rounded"
+							className="px-4 py-2 bg-purple-600 rounded disabled:bg-gray-400"
 							disabled={currentIndex === ids.length - 1}
 						>
 							Next
@@ -419,7 +523,10 @@ const App = () => {
 						leaveFrom="opacity-100"
 						leaveTo="opacity-0"
 					>
-						<div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+						<div
+							className="fixed inset-0 bg-black/30"
+							aria-hidden="true"
+						/>
 					</Transition.Child>
 					<div className="fixed inset-0 flex items-center justify-center p-4">
 						<Transition.Child
@@ -432,11 +539,15 @@ const App = () => {
 							leaveTo="translate-y-4 opacity-0"
 						>
 							<Dialog.Panel className="max-w-sm dialog-panel">
-								<Dialog.Title as="h3" className="text-lg font-bold mb-4">
+								<Dialog.Title
+									as="h3"
+									className="text-lg font-bold mb-4"
+								>
 									Confirm Changes
 								</Dialog.Title>
 								<p className="mb-4">
-									Are you sure you want to apply these changes?
+									Are you sure you want to apply these
+									changes?
 								</p>
 								<div className="flex justify-end space-x-4">
 									<button
